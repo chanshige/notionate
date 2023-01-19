@@ -1,32 +1,18 @@
 import React from 'react'
 import type {
   MultiSelectPropertyItemObjectResponse,
-  Link,
 } from '../../server/types'
 
 export type GalleryMultiSelectProps = {
   payload: MultiSelectPropertyItemObjectResponse
-  path: string
-  link?: Link
 }
 
-export const GalleryMultiSelectField: React.FC<GalleryMultiSelectProps> = ({ payload, path, link }) => {
-  const LinkedTag = (name: string) => {
-    const href = `${path}tags/${encodeURIComponent(name)}`
-    if (link) {
-      const Link = link
-      return (
-        <>
-          <Link className="notionate-gallery-multiselect-a" href={href}>
-            {name}
-          </Link>
-        </>
-      )
-    }
+export const GalleryMultiSelectField: React.FC<GalleryMultiSelectProps> = ({ payload }) => {
+  const Tag = (name: string) => {
     return (
-      <a className="notionate-gallery-multiselect-a" href={href} title={name}>
+      <div className="notionate-gallery-multiselect-a">
         {name}
-      </a>
+      </div>
     )
   }
 
@@ -34,7 +20,7 @@ export const GalleryMultiSelectField: React.FC<GalleryMultiSelectProps> = ({ pay
     <ul className="notionate-gallery-multiselect-ul">
       {payload.multi_select.map(f => (
         <li key={f.id} className={`notionate-gallery-multiselect-li notionate-select-${f.color}`}>
-          {LinkedTag(f.name)}
+          {Tag(f.name)}
         </li>
       ))}
     </ul>

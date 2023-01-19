@@ -47,7 +47,7 @@ export const GalleryHandler = ({ items, path }: GalleryHandlerProps) => {
         return GalleryRichTextField({ payload: items })
 
       case 'multi_select':
-        return GalleryMultiSelectField({ payload: items, path })
+        return GalleryMultiSelectField({ payload: items })
 
       case 'url':
         return GalleryUrlField({ payload: items.url })
