@@ -3,11 +3,26 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.FetchPage = exports.FetchDatabase = exports.FetchBlocks = void 0;
+exports.parseNotionCache = exports.FetchPage = exports.FetchDatabase = exports.FetchBlocks = void 0;
 var _client = require("@notionhq/client");
 var _files = require("./files");
+const parseNotionCache = v => {
+  switch (v) {
+    case '0':
+    case 'n':
+    case 'false':
+      return false;
+    case '1':
+    case 'y':
+    case 'true':
+    default:
+      return true;
+  }
+};
+exports.parseNotionCache = parseNotionCache;
 const cacheDir = process.env.NOTIONATE_CACHEDIR || '.cache';
 const auth = process.env.NOTION_TOKEN;
+const cache = parseNotionCache(process.env.NOTION_CACHE);
 const notion = new _client.Client({
   auth
 });
@@ -20,7 +35,7 @@ const FetchDatabase = async params => {
   } = params;
   const limit = 'page_size' in params ? params.page_size : undefined;
   const paramsHash = (0, _files.atoh)(JSON.stringify(params));
-  const useCache = process.env.NOTION_CACHE === 'true';
+  const useCache = cache;
   if (useCache) {
     await (0, _files.createDirWhenNotfound)(cacheDir);
   }
@@ -94,7 +109,7 @@ const FetchDatabase = async params => {
 };
 exports.FetchDatabase = FetchDatabase;
 const FetchPage = async page_id => {
-  const useCache = process.env.NOTION_CACHE === 'true';
+  const useCache = cache;
   if (useCache) {
     await (0, _files.createDirWhenNotfound)(cacheDir);
   }
@@ -159,7 +174,7 @@ const FetchPage = async page_id => {
 };
 exports.FetchPage = FetchPage;
 const FetchBlocks = async block_id => {
-  const useCache = process.env.NOTION_CACHE === 'true';
+  const useCache = cache;
   if (useCache) {
     await (0, _files.createDirWhenNotfound)(cacheDir);
   }

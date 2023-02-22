@@ -4,8 +4,8 @@ import React from 'react';
 import type { TitlePropertyItemObjectResponse, Link } from '../../server/types';
 export type TableTitleProps = {
     payload: Array<TitlePropertyItemObjectResponse>;
-    path: string;
-    slug: string;
+    path?: string;
+    slug?: string;
     link?: Link;
     query?: ParsedUrlQueryInput;
 };

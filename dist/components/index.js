@@ -519,7 +519,7 @@ var TableTitleField = function (_a) {
         }
         return (React.createElement("a", { className: "notionate-table-title-a", href: href, title: title }, title));
     };
-    return (React.createElement("div", { className: "notionate-table-title" }, LinkedTitle()));
+    return (React.createElement("div", { className: "notionate-table-title" }, (!path && !slug) ? title : LinkedTitle()));
 };
 
 var TableRichTextField = function (_a) {
@@ -531,6 +531,9 @@ var TableRichTextField = function (_a) {
 var TableMultiSelectField = function (_a) {
     var payload = _a.payload, path = _a.path, link = _a.link;
     var LinkedTag = function (name) {
+        if (!path) {
+            return (React.createElement("span", { className: "notionate-table-multiselect-span" }, name));
+        }
         var href = "".concat(path, "tags/").concat(encodeURIComponent(name));
         if (link) {
             var Link = link;
@@ -540,6 +543,26 @@ var TableMultiSelectField = function (_a) {
         return (React.createElement("a", { className: "notionate-table-multiselect-a", href: href, title: name }, name));
     };
     return (React.createElement("ul", { className: "notionate-table-multiselect-ul" }, payload.multi_select.map(function (f) { return (React.createElement("li", { key: f.id, className: "notionate-table-multiselect-li notionate-select-".concat(f.color) }, LinkedTag(f.name))); })));
+};
+
+var TableSelectField = function (_a) {
+    var payload = _a.payload, path = _a.path, link = _a.link;
+    var LinkedTag = function (name) {
+        if (!path) {
+            return (React.createElement("span", { className: "notionate-table-select-span" }, name));
+        }
+        var href = "".concat(path, "tags/").concat(encodeURIComponent(name));
+        if (link) {
+            var Link = link;
+            return (React.createElement(React.Fragment, null,
+                React.createElement(Link, { className: "notionate-table-select-a", href: href }, name)));
+        }
+        return (React.createElement("a", { className: "notionate-table-select-a", href: href, title: name }, name));
+    };
+    if (payload.select) {
+        return (React.createElement("div", { className: "notionate-table-select-div notionate-select-".concat(payload.select.color) }, LinkedTag(payload.select.name)));
+    }
+    return React.createElement(React.Fragment, null);
 };
 
 var TableUrlField = function (_a) {
@@ -594,6 +617,7 @@ var TableHandler = function (_a) {
             case 'number':
                 return TableNumberField({ payload: items });
             case 'select':
+                return TableSelectField({ payload: items, path: path });
             case 'status':
             case 'email':
             case 'phone_number':
@@ -704,7 +728,7 @@ var Table = function (_a) {
         // @ts-ignore
         return p.rich_text.map(function (v) { return v.text.content; }).join(',');
     };
-    var _b = getLinkPathAndLinkKey(href), path = _b[0], slugKey = _b[1];
+    var _b = href ? getLinkPathAndLinkKey(href) : [undefined, undefined], path = _b[0], slugKey = _b[1];
     var dbf = function (name, page) {
         if (!('property_items' in page) || !('properties' in page)) {
             return React.createElement(React.Fragment, null);
@@ -717,7 +741,7 @@ var Table = function (_a) {
             }
         }
         var items = page.property_items.find(function (v) { return ((v.object === 'property_item' && v.id === propertyId) || (v.object === 'list' && v.property_item.id === propertyId)); });
-        var slug = getSlug(slugKey, page);
+        var slug = slugKey ? getSlug(slugKey, page) : undefined;
         return TableHandler({ name: name, items: items, path: path, slug: slug, link: link, query: query });
     };
     return (React.createElement("div", { className: "notionate-table" },

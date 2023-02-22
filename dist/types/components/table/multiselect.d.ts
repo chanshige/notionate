@@ -2,7 +2,7 @@ import React from 'react';
 import type { MultiSelectPropertyItemObjectResponse, Link } from '../../server/types';
 export type TableMultiSelectProps = {
     payload: MultiSelectPropertyItemObjectResponse;
-    path: string;
+    path?: string;
     link?: Link;
 };
 export declare const TableMultiSelectField: React.FC<TableMultiSelectProps>;

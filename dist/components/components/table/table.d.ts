@@ -5,7 +5,7 @@ import type { ParsedUrlQueryInput } from 'node:querystring';
 export type TableProps = React.PropsWithChildren & {
     keys: string[];
     db: QueryDatabaseResponseEx;
-    href: string;
+    href?: string;
     link?: Link;
     query?: ParsedUrlQueryInput;
 };
