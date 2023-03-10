@@ -1,6 +1,7 @@
 import fs from 'fs'
 import { mkdir } from 'node:fs/promises'
 import https from 'https'
+import http from 'http'
 import path from 'path'
 import crypto from 'crypto'
 import { promisify } from 'util'
@@ -8,29 +9,58 @@ import type {
   VideoBlockObjectResponseEx,
   EmbedBlockObjectResponseEx,
 } from './types'
+import pkg from '../../package.json'
 
 const docRoot = process.env.NOTIONATE_DOCROOT || 'public'
 const imageDir = process.env.NOTIONATE_IMAGEDIR || 'images'
+const timeout = 1500
+const httpOptions = {
+  timeout,
+  headers: {
+    'User-Agent': `${pkg.name}/${pkg.version}`,
+    Accept: '*/*',
+  },
+}
 
 // @ts-ignore
 https.get[promisify.custom] = function getAsync (url: any) {
   return new Promise((resolve, reject) => {
-    const options = {
-      headers: {
-        'User-Agent': 'Notionate',
-      },
-    }
-    https.get(url, options, (res) => {
+    const req = https.get(url, httpOptions, (res) => {
       // @ts-ignore
       res.end = new Promise((resolve) => res.on('end', resolve))
       resolve(res)
-    }).on('error', reject)
+    })
+    req.on('error', reject)
+    req.on('timeout', () => {
+      console.log(`request timed out(${timeout}ms): ${url}`)
+      req.abort()
+      return reject
+    })
+  })
+}
+
+// @ts-ignore
+http.get[promisify.custom] = function getAsync (url: any) {
+  return new Promise((resolve, reject) => {
+    const req = http.get(url, httpOptions, (res) => {
+      // @ts-ignore
+      res.end = new Promise((resolve) => res.on('end', resolve))
+      resolve(res)
+    })
+    req.on('error', reject)
+    req.on('timeout', () => {
+      console.log(`request timed out(${timeout}ms): ${url}`)
+      req.abort()
+      return reject
+    })
   })
 }
 
 type HttpGetResponse = {
   pipe: Function
   end: Promise<unknown>
+  statusCode: number
+  rawHeaders: string[]
 }
 
 // https://oembed.com/
@@ -90,6 +120,7 @@ type TwitterOembedResponse = Oembed & {
 }
 
 const httpsGet = promisify(https.get)
+const httpGet = promisify(http.get)
 const readFile = promisify(fs.readFile)
 const writeFile = promisify(fs.writeFile)
 const maxRedirects = 5
@@ -109,10 +140,11 @@ async function httpsGetWithFollowRedirects (reqUrl: string, redirectCount?: numb
   if (!redirectCount) {
     redirectCount = 0
   }
-  const res = await httpsGet(reqUrl) as unknown as HttpGetResponse
-  // @ts-ignore
+
+  const httpFunc = (reqUrl.includes('https://')) ? httpsGet : httpGet
+  const res = await httpFunc(reqUrl) as unknown as HttpGetResponse
+
   if (res.statusCode >= 300 && res.statusCode < 400 && res.rawHeaders.includes('Location')) {
-    // @ts-ignore
     const redirectTo = findLocationUrl(res.rawHeaders)
     redirectCount++
     if (maxRedirects < redirectCount) {
