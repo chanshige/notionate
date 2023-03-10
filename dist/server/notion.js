@@ -3,26 +3,11 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.parseNotionCache = exports.FetchPage = exports.FetchDatabase = exports.FetchBlocks = void 0;
+exports.FetchPage = exports.FetchDatabase = exports.FetchBlocks = void 0;
 var _client = require("@notionhq/client");
 var _files = require("./files");
-const parseNotionCache = v => {
-  switch (v) {
-    case '0':
-    case 'n':
-    case 'false':
-      return false;
-    case '1':
-    case 'y':
-    case 'true':
-    default:
-      return true;
-  }
-};
-exports.parseNotionCache = parseNotionCache;
 const cacheDir = process.env.NOTIONATE_CACHEDIR || '.cache';
 const auth = process.env.NOTION_TOKEN;
-const cache = parseNotionCache(process.env.NOTION_CACHE);
 const notion = new _client.Client({
   auth
 });
@@ -35,25 +20,23 @@ const FetchDatabase = async params => {
   } = params;
   const limit = 'page_size' in params ? params.page_size : undefined;
   const paramsHash = (0, _files.atoh)(JSON.stringify(params));
-  const useCache = cache;
-  if (useCache) {
-    await (0, _files.createDirWhenNotfound)(cacheDir);
-  }
+  await (0, _files.createDirWhenNotfound)(cacheDir);
   const cacheFile = `${cacheDir}/notion.databases.query-${paramsHash}${limit !== undefined ? `.limit-${limit}` : ''}`;
-  let cursor;
   let allres;
-  if (useCache) {
-    try {
-      const list = await (0, _files.readCache)(cacheFile);
-      if (!isEmpty(list)) {
-        return list;
-      }
-    } catch (_) {
-      /* not fatal */
+  let res;
+  try {
+    const list = await (0, _files.readCache)(cacheFile);
+    if (!isEmpty(list)) {
+      return list;
     }
+  } catch (_) {
+    /* not fatal */
   }
   while (true) {
-    const res = await notion.databases.query(params);
+    if (res && res.next_cursor) {
+      params.start_cursor = res.next_cursor;
+    }
+    res = await notion.databases.query(params);
     if (allres === undefined) {
       allres = res;
     } else {
@@ -62,9 +45,6 @@ const FetchDatabase = async params => {
     if (res.next_cursor === null || limit !== undefined) {
       break;
     }
-
-    /* eslint-disable no-unused-vars */
-    cursor = res.next_cursor;
   }
   for (const result of allres.results) {
     const page = result;
@@ -102,27 +82,20 @@ const FetchDatabase = async params => {
     meta.cover.src = await (0, _files.saveImage)(imageUrl, `database-cover-${database_id}`);
   }
   allres.meta = meta;
-  if (useCache) {
-    await (0, _files.writeCache)(cacheFile, allres);
-  }
+  await (0, _files.writeCache)(cacheFile, allres);
   return allres;
 };
 exports.FetchDatabase = FetchDatabase;
 const FetchPage = async page_id => {
-  const useCache = cache;
-  if (useCache) {
-    await (0, _files.createDirWhenNotfound)(cacheDir);
-  }
+  await (0, _files.createDirWhenNotfound)(cacheDir);
   const cacheFile = `${cacheDir}/notion.pages.retrieve-${page_id}`;
-  if (useCache) {
-    try {
-      const page = await (0, _files.readCache)(cacheFile);
-      if (!isEmpty(page)) {
-        return page;
-      }
-    } catch (_) {
-      /* not fatal */
+  try {
+    const page = await (0, _files.readCache)(cacheFile);
+    if (!isEmpty(page)) {
+      return page;
     }
+  } catch (_) {
+    /* not fatal */
   }
   const page = await notion.pages.retrieve({
     page_id
@@ -146,95 +119,75 @@ const FetchPage = async page_id => {
     }
     page.meta = list;
   }
-  if (useCache) {
-    if (page.cover !== null) {
-      if (page.cover.type === 'external') {
-        page.cover.src = await (0, _files.saveImage)(page.cover.external.url, `page-cover-${page.id}`);
-      } else if (page.cover.type === 'file') {
-        page.cover.src = await (0, _files.saveImage)(page.cover.file.url, `page-cover-${page.id}`);
-      }
-    }
-    if (page.icon?.type === 'file') {
-      page.icon.src = await (0, _files.saveImage)(page.icon.file.url, `page-icon-${page.id}`);
-    }
-    await (0, _files.writeCache)(cacheFile, page);
-  } else {
-    if (page.cover !== null) {
-      if (page.cover.type === 'external') {
-        page.cover.src = page.cover.external.url;
-      } else if (page.cover.type === 'file') {
-        page.cover.src = page.cover.file.url;
-      }
-    }
-    if (page.icon?.type === 'file') {
-      page.icon.src = page.icon.file.url;
+  if (page.cover !== null) {
+    if (page.cover.type === 'external') {
+      page.cover.src = await (0, _files.saveImage)(page.cover.external.url, `page-cover-${page.id}`);
+    } else if (page.cover.type === 'file') {
+      page.cover.src = await (0, _files.saveImage)(page.cover.file.url, `page-cover-${page.id}`);
     }
   }
+  if (page.icon?.type === 'file') {
+    page.icon.src = await (0, _files.saveImage)(page.icon.file.url, `page-icon-${page.id}`);
+  }
+  await (0, _files.writeCache)(cacheFile, page);
   return page;
 };
 exports.FetchPage = FetchPage;
 const FetchBlocks = async block_id => {
-  const useCache = cache;
-  if (useCache) {
-    await (0, _files.createDirWhenNotfound)(cacheDir);
-  }
+  await (0, _files.createDirWhenNotfound)(cacheDir);
   const cacheFile = `${cacheDir}/notion.blocks.children.list-${block_id}`;
-  if (useCache) {
-    try {
-      const list = await (0, _files.readCache)(cacheFile);
-      if (!isEmpty(list)) {
-        return list;
-      }
-    } catch (_) {
-      /* not fatal */
+  try {
+    const list = await (0, _files.readCache)(cacheFile);
+    if (!isEmpty(list)) {
+      return list;
     }
+  } catch (_) {
+    /* not fatal */
   }
   const list = await notion.blocks.children.list({
     block_id
   });
-  if (useCache) {
-    for (const block of list.results) {
-      try {
-        if (block.type === 'table' && block.table !== undefined) {
-          block.children = await FetchBlocks(block.id);
-        } else if (block.type === 'toggle' && block.toggle !== undefined) {
-          block.children = await FetchBlocks(block.id);
-        } else if (block.type === 'column_list' && block.column_list !== undefined) {
-          block.children = await FetchBlocks(block.id);
-          block.columns = [];
-          for (const b of block.children.results) {
-            block.columns.push(await FetchBlocks(b.id));
-          }
-        } else if (block.type === 'child_page' && block.child_page !== undefined) {
-          block.page = await FetchPage(block.id);
-          block.children = await FetchBlocks(block.id);
-        } else if (block.type === 'child_database' && block.child_database !== undefined && block.has_children) {
-          const database_id = block.id;
-          block.database = await notion.databases.retrieve({
-            database_id
-          });
-        } else if (block.type === 'bookmark' && block.bookmark !== undefined) {
-          block.bookmark.site = await (0, _files.getHtmlMeta)(block.bookmark.url);
-        } else if (block.type === 'image' && block.image !== undefined) {
-          const {
-            id,
-            image
-          } = block;
-          if (image !== undefined) {
-            const imageUrl = image.type === 'file' ? image.file.url : image.external.url;
-            block.image.src = await (0, _files.saveImage)(imageUrl, `block-${id}`);
-          }
-        } else if (block.type === 'video' && block.video !== undefined && block.video.type === 'external') {
-          block.video.html = await (0, _files.getVideoHtml)(block);
-        } else if (block.type === 'embed' && block.embed !== undefined) {
-          block.embed.html = await (0, _files.getEmbedHtml)(block);
+  for (const block of list.results) {
+    try {
+      if (block.type === 'table' && block.table !== undefined) {
+        block.children = await FetchBlocks(block.id);
+      } else if (block.type === 'toggle' && block.toggle !== undefined) {
+        block.children = await FetchBlocks(block.id);
+      } else if (block.type === 'column_list' && block.column_list !== undefined) {
+        block.children = await FetchBlocks(block.id);
+        block.columns = [];
+        for (const b of block.children.results) {
+          block.columns.push(await FetchBlocks(b.id));
         }
-      } catch (e) {
-        console.log(`error for ${block.type} contents get`, block, e);
+      } else if (block.type === 'child_page' && block.child_page !== undefined) {
+        block.page = await FetchPage(block.id);
+        block.children = await FetchBlocks(block.id);
+      } else if (block.type === 'child_database' && block.child_database !== undefined && block.has_children) {
+        const database_id = block.id;
+        block.database = await notion.databases.retrieve({
+          database_id
+        });
+      } else if (block.type === 'bookmark' && block.bookmark !== undefined) {
+        block.bookmark.site = await (0, _files.getHtmlMeta)(block.bookmark.url);
+      } else if (block.type === 'image' && block.image !== undefined) {
+        const {
+          id,
+          image
+        } = block;
+        if (image !== undefined) {
+          const imageUrl = image.type === 'file' ? image.file.url : image.external.url;
+          block.image.src = await (0, _files.saveImage)(imageUrl, `block-${id}`);
+        }
+      } else if (block.type === 'video' && block.video !== undefined && block.video.type === 'external') {
+        block.video.html = await (0, _files.getVideoHtml)(block);
+      } else if (block.type === 'embed' && block.embed !== undefined) {
+        block.embed.html = await (0, _files.getEmbedHtml)(block);
       }
+    } catch (e) {
+      console.log(`error for ${block.type} contents get`, block, e);
     }
-    await (0, _files.writeCache)(cacheFile, list);
   }
+  await (0, _files.writeCache)(cacheFile, list);
   return list;
 };
 exports.FetchBlocks = FetchBlocks;

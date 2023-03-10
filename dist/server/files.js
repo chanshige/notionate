@@ -12,29 +12,58 @@ exports.writeCache = writeCache;
 var _fs = _interopRequireDefault(require("fs"));
 var _promises = require("node:fs/promises");
 var _https = _interopRequireDefault(require("https"));
+var _http = _interopRequireDefault(require("http"));
 var _path = _interopRequireDefault(require("path"));
 var _crypto = _interopRequireDefault(require("crypto"));
 var _util = require("util");
+var _package = _interopRequireDefault(require("../../package.json"));
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 const docRoot = process.env.NOTIONATE_DOCROOT || 'public';
 const imageDir = process.env.NOTIONATE_IMAGEDIR || 'images';
+const timeout = 1500;
+const httpOptions = {
+  timeout,
+  headers: {
+    'User-Agent': `${_package.default.name}/${_package.default.version}`,
+    Accept: '*/*'
+  }
+};
 
 // @ts-ignore
 _https.default.get[_util.promisify.custom] = function getAsync(url) {
   return new Promise((resolve, reject) => {
-    const options = {
-      headers: {
-        'User-Agent': 'Notionate'
-      }
-    };
-    _https.default.get(url, options, res => {
+    const req = _https.default.get(url, httpOptions, res => {
       // @ts-ignore
       res.end = new Promise(resolve => res.on('end', resolve));
       resolve(res);
-    }).on('error', reject);
+    });
+    req.on('error', reject);
+    req.on('timeout', () => {
+      console.log(`request timed out(${timeout}ms): ${url}`);
+      req.abort();
+      return reject;
+    });
+  });
+};
+
+// @ts-ignore
+_http.default.get[_util.promisify.custom] = function getAsync(url) {
+  return new Promise((resolve, reject) => {
+    const req = _http.default.get(url, httpOptions, res => {
+      // @ts-ignore
+      res.end = new Promise(resolve => res.on('end', resolve));
+      resolve(res);
+    });
+    req.on('error', reject);
+    req.on('timeout', () => {
+      console.log(`request timed out(${timeout}ms): ${url}`);
+      req.abort();
+      return reject;
+    });
   });
 };
 const httpsGet = (0, _util.promisify)(_https.default.get);
+const httpGet = (0, _util.promisify)(_http.default.get);
 const readFile = (0, _util.promisify)(_fs.default.readFile);
 const writeFile = (0, _util.promisify)(_fs.default.writeFile);
 const maxRedirects = 5;
@@ -53,10 +82,9 @@ async function httpsGetWithFollowRedirects(reqUrl, redirectCount) {
   if (!redirectCount) {
     redirectCount = 0;
   }
-  const res = await httpsGet(reqUrl);
-  // @ts-ignore
+  const httpFunc = reqUrl.includes('https://') ? httpsGet : httpGet;
+  const res = await httpFunc(reqUrl);
   if (res.statusCode >= 300 && res.statusCode < 400 && res.rawHeaders.includes('Location')) {
-    // @ts-ignore
     const redirectTo = findLocationUrl(res.rawHeaders);
     redirectCount++;
     if (maxRedirects < redirectCount) {

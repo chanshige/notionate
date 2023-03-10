@@ -1,1 +1,0 @@
-{"version":3,"file":"multiselect.d.ts","sourceRoot":"","sources":["../../../../src/components/gallery/multiselect.tsx"],"names":[],"mappings":"AAAA,OAAO,KAAK,MAAM,OAAO,CAAA;AACzB,OAAO,KAAK,EACV,qCAAqC,EACtC,MAAM,oBAAoB,CAAA;AAE3B,MAAM,MAAM,uBAAuB,GAAG;IACpC,OAAO,EAAE,qCAAqC,CAAA;CAC/C,CAAA;AAED,eAAO,MAAM,uBAAuB,EAAE,KAAK,CAAC,EAAE,CAAC,uBAAuB,CAkBrE,CAAA;AAED,eAAe,uBAAuB,CAAA"}

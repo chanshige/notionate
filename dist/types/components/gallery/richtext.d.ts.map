@@ -1,1 +1,0 @@
-{"version":3,"file":"richtext.d.ts","sourceRoot":"","sources":["../../../../src/components/gallery/richtext.tsx"],"names":[],"mappings":"AAAA,OAAO,KAAK,MAAM,OAAO,CAAA;AACzB,OAAO,KAAK,EACV,kCAAkC,EACnC,MAAM,oBAAoB,CAAA;AAG3B,MAAM,MAAM,oBAAoB,GAAG;IACjC,OAAO,EAAE,kCAAkC,CAAA;CAC5C,CAAA;AAED,eAAO,MAAM,oBAAoB,EAAE,KAAK,CAAC,EAAE,CAAC,oBAAoB,CAM/D,CAAA;AAED,eAAe,oBAAoB,CAAA"}
