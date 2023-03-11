@@ -13,7 +13,7 @@ import pkg from '../../package.json'
 
 const docRoot = process.env.NOTIONATE_DOCROOT || 'public'
 const imageDir = process.env.NOTIONATE_IMAGEDIR || 'images'
-const timeout = 1500
+const timeout = 10000
 const httpOptions = {
   timeout,
   headers: {
@@ -33,7 +33,7 @@ https.get[promisify.custom] = function getAsync (url: any) {
     req.on('error', reject)
     req.on('timeout', () => {
       console.log(`request timed out(${timeout}ms): ${url}`)
-      req.abort()
+      req.destroy()
       return reject
     })
   })

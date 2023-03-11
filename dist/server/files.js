@@ -20,7 +20,7 @@ var _package = _interopRequireDefault(require("../../package.json"));
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 const docRoot = process.env.NOTIONATE_DOCROOT || 'public';
 const imageDir = process.env.NOTIONATE_IMAGEDIR || 'images';
-const timeout = 1500;
+const timeout = 10000;
 const httpOptions = {
   timeout,
   headers: {
@@ -40,7 +40,7 @@ _https.default.get[_util.promisify.custom] = function getAsync(url) {
     req.on('error', reject);
     req.on('timeout', () => {
       console.log(`request timed out(${timeout}ms): ${url}`);
-      req.abort();
+      req.destroy();
       return reject;
     });
   });
