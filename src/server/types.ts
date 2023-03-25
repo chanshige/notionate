@@ -1,7 +1,6 @@
 import type {
   QueryDatabaseResponse,
   GetDatabaseResponse,
-  GetPageResponse,
   ListBlockChildrenResponse,
   GetSelfResponse,
   ParagraphBlockObjectResponse,
@@ -41,6 +40,7 @@ import type {
   GetPagePropertyResponse,
   PageObjectResponse,
   PersonUserObjectResponse,
+  DatabaseObjectResponse,
 } from '@notionhq/client/build/src/api-endpoints'
 import type { UrlObject } from 'node:url'
 
@@ -214,10 +214,11 @@ export type BlockObjectResponse =
 export type ListBlockChildrenResponseEx = ListBlockChildrenResponse & {
   results: Array<BlockObjectResponse>
   children?: ListBlockChildrenResponse
+  last_edited_time?: string
 }
 
 // Extending by adding src param
-export type GetPageResponseEx = GetPageResponse & {
+export type GetPageResponseEx = PageObjectResponse & {
   cover:
     | { src: string, type: 'external', external: { url: string, expiry_time: string } }
     | { src: string, type: 'file', file: { url: string, expiry_time: string } }
@@ -312,7 +313,7 @@ export type PageObjectResponseEx = PageObjectResponse & {
 }
 
 // https://github.com/makenotion/notion-sdk-js/blob/7c5b7645759bf90d71d496dc542a1a912379ee12/src/api-endpoints.ts#L4603-L4632
-export type GetDatabaseResponseEx = GetDatabaseResponse & {
+export type GetDatabaseResponseEx = DatabaseObjectResponse & {
   icon:
     | { type: 'emoji'; emoji: EmojiRequest }
     | { src: string, type: 'external'; external: { url: TextRequest } }

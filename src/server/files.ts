@@ -1,5 +1,5 @@
 import fs from 'fs'
-import { mkdir } from 'node:fs/promises'
+import { mkdir, stat } from 'node:fs/promises'
 import https from 'https'
 import http from 'http'
 import path from 'path'
@@ -196,6 +196,12 @@ export async function writeCache (f: string, data: unknown): Promise<void> {
   return writeFile(f, JSON.stringify(data), 'utf8').catch(() => {})
 }
 
+export async function isAvailableCache (f: string, seconds: number): Promise<boolean> {
+  const t = new Date(Date.now() + (seconds * 1000))
+  const stats = await stat(f)
+  return stats.mtime < t
+}
+
 export const saveImage = async (imageUrl: string, prefix: string): Promise<string> => {
   const urlWithoutQuerystring = imageUrl.split('?').shift() || ''
   const { ext, name } = path.parse(urlWithoutQuerystring)
@@ -244,9 +250,9 @@ export const findHtmlByRegexp = (regexps: RegExp[], html: string): string | null
 }
 
 export const titleRegexps = [
-  /property="og:title"\s+content="([^"]+)"/,
   /<title>([^"]*?)<\/title>/,
   /<title\s+[^"]+="[^"]+">([^"]*?)<\/title>/,
+  /property="og:title"\s+content="([^"]+)"/,
 ]
 
 export const descRegexps = [
@@ -298,7 +304,7 @@ export const getHtmlMeta = async (reqUrl: string): Promise<{ title: string, desc
     const title = findHtmlByRegexp(titleRegexps, body) || ''
     const desc = findHtmlByRegexp(descRegexps, body) || ''
     const imagePath = findHtmlByRegexp(imageRegexps, body) || findImage(body) || ''
-    const iconPath = findHtmlByRegexp(iconRegexps, body) || ''
+    const iconPath = findHtmlByRegexp(iconRegexps, body) || '/favicon.ico'
 
     const url = new URL(reqUrl)
     const imageUrl = imagePath !== '' ? (imagePath.match(/^(https?:|data:)/) ? imagePath : `${url.protocol}//${url.hostname}${imagePath}`) : ''
