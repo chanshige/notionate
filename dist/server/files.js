@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", {
 exports.getHtmlMeta = exports.getEmbedHtml = exports.findLocationUrl = exports.findImage = exports.findHtmlByRegexp = exports.descRegexps = exports.createDirWhenNotfound = exports.atoh = void 0;
 exports.getJson = getJson;
 exports.imageRegexps = exports.iconRegexps = exports.getVideoHtml = void 0;
+exports.isAvailableCache = isAvailableCache;
 exports.readCache = readCache;
 exports.titleRegexps = exports.saveImage = void 0;
 exports.writeCache = writeCache;
@@ -133,6 +134,11 @@ async function readCache(f) {
 async function writeCache(f, data) {
   return writeFile(f, JSON.stringify(data), 'utf8').catch(() => {});
 }
+async function isAvailableCache(f, seconds) {
+  const t = new Date(Date.now() + seconds * 1000);
+  const stats = await (0, _promises.stat)(f);
+  return stats.mtime < t;
+}
 const saveImage = async (imageUrl, prefix) => {
   const urlWithoutQuerystring = imageUrl.split('?').shift() || '';
   const {
@@ -172,7 +178,7 @@ const findHtmlByRegexp = (regexps, html) => {
   return matched[1].replaceAll('\n', ' ').trim().replace(/<[^>]*>?/gm, '').replaceAll('https:https:', 'https:');
 };
 exports.findHtmlByRegexp = findHtmlByRegexp;
-const titleRegexps = [/property="og:title"\s+content="([^"]+)"/, /<title>([^"]*?)<\/title>/, /<title\s+[^"]+="[^"]+">([^"]*?)<\/title>/];
+const titleRegexps = [/<title>([^"]*?)<\/title>/, /<title\s+[^"]+="[^"]+">([^"]*?)<\/title>/, /property="og:title"\s+content="([^"]+)"/];
 exports.titleRegexps = titleRegexps;
 const descRegexps = [/property="og:description"\s+content="([^"]+)"/, /content="([^"]+)"\s+property="og:description"/, /name="description"\s+content="([^"]+)"/, /content="([^"]+)"\s+name="description"/, /<div.*?>([\s\S]*?)<\/div>/];
 exports.descRegexps = descRegexps;
@@ -200,7 +206,7 @@ const getHtmlMeta = async reqUrl => {
     const title = findHtmlByRegexp(titleRegexps, body) || '';
     const desc = findHtmlByRegexp(descRegexps, body) || '';
     const imagePath = findHtmlByRegexp(imageRegexps, body) || findImage(body) || '';
-    const iconPath = findHtmlByRegexp(iconRegexps, body) || '';
+    const iconPath = findHtmlByRegexp(iconRegexps, body) || '/favicon.ico';
     const url = new URL(reqUrl);
     const imageUrl = imagePath !== '' ? imagePath.match(/^(https?:|data:)/) ? imagePath : `${url.protocol}//${url.hostname}${imagePath}` : '';
     const image = imagePath !== '' ? imagePath.match(/^data:/) ? imagePath : await saveImage(imageUrl, 'html-image') : '';

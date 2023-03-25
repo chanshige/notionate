@@ -1,6 +1,6 @@
 /// <reference types="react" />
 /// <reference types="node" />
-import type { QueryDatabaseResponse, GetDatabaseResponse, GetPageResponse, ListBlockChildrenResponse, GetSelfResponse, ParagraphBlockObjectResponse, Heading1BlockObjectResponse, Heading2BlockObjectResponse, Heading3BlockObjectResponse, BulletedListItemBlockObjectResponse, NumberedListItemBlockObjectResponse, QuoteBlockObjectResponse, ToDoBlockObjectResponse, ToggleBlockObjectResponse, TemplateBlockObjectResponse, SyncedBlockBlockObjectResponse, ChildPageBlockObjectResponse, ChildDatabaseBlockObjectResponse, EquationBlockObjectResponse, CodeBlockObjectResponse, CalloutBlockObjectResponse, DividerBlockObjectResponse, BreadcrumbBlockObjectResponse, TableOfContentsBlockObjectResponse, ColumnListBlockObjectResponse, ColumnBlockObjectResponse, LinkToPageBlockObjectResponse, TableBlockObjectResponse, TableRowBlockObjectResponse, EmbedBlockObjectResponse, BookmarkBlockObjectResponse, ImageBlockObjectResponse, VideoBlockObjectResponse, PdfBlockObjectResponse, FileBlockObjectResponse, AudioBlockObjectResponse, LinkPreviewBlockObjectResponse, UnsupportedBlockObjectResponse, RichTextItemResponse, GetPagePropertyResponse, PageObjectResponse, PersonUserObjectResponse } from '@notionhq/client/build/src/api-endpoints';
+import type { QueryDatabaseResponse, GetDatabaseResponse, ListBlockChildrenResponse, GetSelfResponse, ParagraphBlockObjectResponse, Heading1BlockObjectResponse, Heading2BlockObjectResponse, Heading3BlockObjectResponse, BulletedListItemBlockObjectResponse, NumberedListItemBlockObjectResponse, QuoteBlockObjectResponse, ToDoBlockObjectResponse, ToggleBlockObjectResponse, TemplateBlockObjectResponse, SyncedBlockBlockObjectResponse, ChildPageBlockObjectResponse, ChildDatabaseBlockObjectResponse, EquationBlockObjectResponse, CodeBlockObjectResponse, CalloutBlockObjectResponse, DividerBlockObjectResponse, BreadcrumbBlockObjectResponse, TableOfContentsBlockObjectResponse, ColumnListBlockObjectResponse, ColumnBlockObjectResponse, LinkToPageBlockObjectResponse, TableBlockObjectResponse, TableRowBlockObjectResponse, EmbedBlockObjectResponse, BookmarkBlockObjectResponse, ImageBlockObjectResponse, VideoBlockObjectResponse, PdfBlockObjectResponse, FileBlockObjectResponse, AudioBlockObjectResponse, LinkPreviewBlockObjectResponse, UnsupportedBlockObjectResponse, RichTextItemResponse, GetPagePropertyResponse, PageObjectResponse, PersonUserObjectResponse, DatabaseObjectResponse } from '@notionhq/client/build/src/api-endpoints';
 import type { UrlObject } from 'node:url';
 export * from '@notionhq/client/build/src/api-endpoints';
 export type IdRequest = string | string;
@@ -131,8 +131,9 @@ export type BlockObjectResponse = ParagraphBlockObjectResponse | Heading1BlockOb
 export type ListBlockChildrenResponseEx = ListBlockChildrenResponse & {
     results: Array<BlockObjectResponse>;
     children?: ListBlockChildrenResponse;
+    last_edited_time?: string;
 };
-export type GetPageResponseEx = GetPageResponse & {
+export type GetPageResponseEx = PageObjectResponse & {
     cover: {
         src: string;
         type: 'external';
@@ -369,7 +370,7 @@ export type PageObjectResponseEx = PageObjectResponse & {
         };
     } | null;
 };
-export type GetDatabaseResponseEx = GetDatabaseResponse & {
+export type GetDatabaseResponseEx = DatabaseObjectResponse & {
     icon: {
         type: 'emoji';
         emoji: EmojiRequest;

@@ -7,6 +7,7 @@ exports.FetchPage = exports.FetchDatabase = exports.FetchBlocks = void 0;
 var _client = require("@notionhq/client");
 var _files = require("./files");
 const cacheDir = process.env.NOTIONATE_CACHEDIR || '.cache';
+const incrementalCache = process.env.NOTIONATE_INCREMENTAL_CACHE === 'true';
 const auth = process.env.NOTION_TOKEN;
 const notion = new _client.Client({
   auth
@@ -14,6 +15,11 @@ const notion = new _client.Client({
 const isEmpty = obj => {
   return !Object.keys(obj).length;
 };
+
+/**
+ * FetchDatabase retrieves database and download images in from blocks.
+ * And create cache that includes filepath of downloaded images.
+ */
 const FetchDatabase = async params => {
   const {
     database_id
@@ -27,7 +33,12 @@ const FetchDatabase = async params => {
   try {
     const list = await (0, _files.readCache)(cacheFile);
     if (!isEmpty(list)) {
-      return list;
+      if (!incrementalCache) {
+        return list;
+      }
+      if (await (0, _files.isAvailableCache)(cacheFile, 120)) {
+        return list;
+      }
     }
   } catch (_) {
     /* not fatal */
@@ -85,14 +96,27 @@ const FetchDatabase = async params => {
   await (0, _files.writeCache)(cacheFile, allres);
   return allres;
 };
+
+/**
+ * FetchPage retrieves page properties and download images in from properties.
+ * And create cache that includes filepath of downloaded images.
+ * The last_edited_time of 2nd args is for NOTIONATE_INCREMENTAL_CACHE.
+ */
 exports.FetchDatabase = FetchDatabase;
-const FetchPage = async page_id => {
+const FetchPage = async (page_id, last_edited_time) => {
   await (0, _files.createDirWhenNotfound)(cacheDir);
   const cacheFile = `${cacheDir}/notion.pages.retrieve-${page_id}`;
   try {
     const page = await (0, _files.readCache)(cacheFile);
     if (!isEmpty(page)) {
-      return page;
+      if (incrementalCache && last_edited_time === undefined) {
+        console.log('last_edited_time is required as a FetchPage() args when incremental cache');
+        return page;
+      }
+      if (!incrementalCache || 'last_edited_time' in page && page.last_edited_time === last_edited_time) {
+        return page;
+      }
+      console.log(`incremental page cache: ${cacheFile}`);
     }
   } catch (_) {
     /* not fatal */
@@ -119,27 +143,40 @@ const FetchPage = async page_id => {
     }
     page.meta = list;
   }
-  if (page.cover !== null) {
+  if ('cover' in page && page.cover !== null) {
     if (page.cover.type === 'external') {
       page.cover.src = await (0, _files.saveImage)(page.cover.external.url, `page-cover-${page.id}`);
     } else if (page.cover.type === 'file') {
       page.cover.src = await (0, _files.saveImage)(page.cover.file.url, `page-cover-${page.id}`);
     }
   }
-  if (page.icon?.type === 'file') {
+  if ('icon' in page && page.icon?.type === 'file') {
     page.icon.src = await (0, _files.saveImage)(page.icon.file.url, `page-icon-${page.id}`);
   }
   await (0, _files.writeCache)(cacheFile, page);
   return page;
 };
+
+/**
+ * FetchBlocks retrieves page blocks and download images in from blocks.
+ * And create cache that includes filepath of downloaded images.
+ * The last_edited_time of 2nd args is for NOTIONATE_INCREMENTAL_CACHE.
+ */
 exports.FetchPage = FetchPage;
-const FetchBlocks = async block_id => {
+const FetchBlocks = async (block_id, last_edited_time) => {
   await (0, _files.createDirWhenNotfound)(cacheDir);
   const cacheFile = `${cacheDir}/notion.blocks.children.list-${block_id}`;
   try {
     const list = await (0, _files.readCache)(cacheFile);
     if (!isEmpty(list)) {
-      return list;
+      if (incrementalCache && last_edited_time === undefined) {
+        console.log('last_edited_time is required as a FetchBlocks() args when incremental cache');
+        return list;
+      }
+      if (!incrementalCache || list.last_edited_time === last_edited_time) {
+        return list;
+      }
+      console.log(`incremental block cache: ${cacheFile}`);
     }
   } catch (_) {
     /* not fatal */
@@ -147,21 +184,27 @@ const FetchBlocks = async block_id => {
   const list = await notion.blocks.children.list({
     block_id
   });
+
+  // With the blocks api, you can get the last modified date of a block,
+  // but not the last modified date of all blocks. So extend the type and add it.
+  if (last_edited_time) {
+    list.last_edited_time = last_edited_time;
+  }
   for (const block of list.results) {
     try {
       if (block.type === 'table' && block.table !== undefined) {
-        block.children = await FetchBlocks(block.id);
+        block.children = await FetchBlocks(block.id, block.last_edited_time);
       } else if (block.type === 'toggle' && block.toggle !== undefined) {
-        block.children = await FetchBlocks(block.id);
+        block.children = await FetchBlocks(block.id, block.last_edited_time);
       } else if (block.type === 'column_list' && block.column_list !== undefined) {
-        block.children = await FetchBlocks(block.id);
+        block.children = await FetchBlocks(block.id, block.last_edited_time);
         block.columns = [];
         for (const b of block.children.results) {
-          block.columns.push(await FetchBlocks(b.id));
+          block.columns.push(await FetchBlocks(b.id, block.last_edited_time));
         }
       } else if (block.type === 'child_page' && block.child_page !== undefined) {
-        block.page = await FetchPage(block.id);
-        block.children = await FetchBlocks(block.id);
+        block.page = await FetchPage(block.id, block.last_edited_time);
+        block.children = await FetchBlocks(block.id, block.last_edited_time);
       } else if (block.type === 'child_database' && block.child_database !== undefined && block.has_children) {
         const database_id = block.id;
         block.database = await notion.databases.retrieve({
