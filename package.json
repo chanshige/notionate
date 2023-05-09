@@ -1,13 +1,13 @@
 {
   "name": "notionate",
-  "version": "8.0.3",
+  "version": "9.0.0",
   "license": "MIT",
   "repository": "linyows/notionate",
   "description": "This is React components that uses the Notion API to display the Notion's database and page.",
-  "main": "dist/server/index.js",
+  "main": "./dist/server/index.js",
   "components": "dist/components/index.js",
   "componentsSrc": "src/components/index.ts",
-  "types": "dist/types/src/index.d.ts",
+  "types": "./dist/types/index.d.ts",
   "files": [
     "LICENSE",
     "README.md",
@@ -19,26 +19,29 @@
   },
   "scripts": {
     "dev": "next dev",
-    "build": "npm run clean && npm run lint && npm run transpile && npm run typecheck && npm run types && npm run rollup && npm run styles",
-    "rollup": "rollup -c --bundleConfigAsCjs",
-    "transpile": "babel src/server -D -d dist/server --extensions '.ts,.tsx' --config-file ./src/.babelrc.json",
-    "types": "tsc -p ./src/tsconfig.json",
+    "build": "npm run clean && npm run lint && npm run transpile && npm run typecheck && npm run declaration && npm run rollup && npm run components-declaration && npm run styles",
+    "rollup": "rollup --config rollup.config.ts --configPlugin typescript",
+    "transpile": "babel src/server -D -d dist/server --extensions '.ts,.tsx' --config-file ./babelrc.json",
+    "declaration": "tsc -p ./src/tsconfig.declaration.json && mv dist/src dist/types",
+    "components-declaration": "cp -r dist/types/* dist/components",
     "typecheck": "tsc -p ./src/tsconfig.typecheck.json",
     "styles": "cp -r ./src/styles ./dist/",
     "lint": "eslint ./src --ext .js,.jsx,.ts,.tsx",
     "clean": "rm -rf dist/*",
     "cacheclean": "rm -rf .cache/*",
-    "export": "next build && next export",
-    "test": "uvu -r ts-node/register test"
+    "export": "next build",
+    "test": "uvu -r ts-node/register test",
+    "prepublishOnly": "npm install && npm run build && npm test"
   },
   "peerDependencies": {
     "react": "^17.0.2 || ^18.0.0-0",
-    "react-dom": "^17.0.2 || ^18.0.0-0"
+    "react-dom": "^17.0.2 || ^18.0.0-0",
+    "@types/prismjs": "^1.26.0",
+    "mermaid": "^10.1.0",
+    "prismjs": "^1.25.0"
   },
   "dependencies": {
-    "@notionhq/client": "^2.1.1",
-    "@types/prismjs": "^1.26.0",
-    "prismjs": "^1.25.0"
+    "@notionhq/client": "^2.1.1"
   },
   "devDependencies": {
     "@babel/cli": "^7.17.6",
@@ -71,7 +74,6 @@
     "rollup-plugin-delete": "^2.0.0",
     "rollup-plugin-dts": "^5.0.0",
     "rollup-plugin-import-css": "^3.0.3",
-    "rollup-plugin-peer-deps-external": "^2.2.4",
     "testdouble": "^3.16.6",
     "ts-node": "^10.9.1",
     "tslib": "^2.4.0",
