@@ -1,0 +1,1 @@
+{"version":3,"file":"toggle.d.ts","sourceRoot":"","sources":["../../../../../src/components/page/toggle.tsx"],"names":[],"mappings":"AAAA,OAAO,KAAmB,MAAM,OAAO,CAAA;AAEvC,OAAO,KAAK,EACV,2BAA2B,EAE5B,MAAM,oBAAoB,CAAA;AAE3B,MAAM,MAAM,gBAAgB,GAAG;IAC7B,KAAK,EAAE,2BAA2B,CAAA;CACnC,CAAA;AAiBD,QAAA,MAAM,WAAW,EAAE,KAAK,CAAC,EAAE,CAAC,gBAAgB,CAoB3C,CAAA;AAED,eAAe,WAAW,CAAA"}
