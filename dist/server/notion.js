@@ -8,6 +8,8 @@ var _client = require("@notionhq/client");
 var _files = require("./files");
 const cacheDir = process.env.NOTIONATE_CACHEDIR || '.cache';
 const incrementalCache = process.env.NOTIONATE_INCREMENTAL_CACHE === 'true';
+const waitingTimeSec = process.env.NOTIONATE_WAITTIME || 0;
+const waitTimeSecAfterLimit = process.env.NOTIONATE_LIMITED_WAITTIME || 60 * 1000;
 const auth = process.env.NOTION_TOKEN;
 const notion = new _client.Client({
   auth
@@ -15,6 +17,57 @@ const notion = new _client.Client({
 const isEmpty = obj => {
   return !Object.keys(obj).length;
 };
+async function reqAPIWithBackoff(func, args, count) {
+  if (count < 1) {
+    throw new Error('backoff count exceeded');
+  }
+  let res = null;
+  try {
+    res = await func(args);
+    if (waitingTimeSec > 0) {
+      await new Promise(resolve => setTimeout(resolve, waitingTimeSec));
+    }
+  } catch (error) {
+    if ((0, _client.isNotionClientError)(error)) {
+      switch (error.code) {
+        case _client.APIErrorCode.RateLimited:
+        case _client.APIErrorCode.InternalServerError:
+        case _client.ClientErrorCode.ResponseError:
+        case _client.ClientErrorCode.RequestTimeout:
+          console.log(`backoff(${count}) -- error code: ${error.code}`);
+          if (waitTimeSecAfterLimit > 0) {
+            await new Promise(resolve => setTimeout(resolve, waitTimeSecAfterLimit));
+          }
+          res = await reqAPIWithBackoff(func, args, count--);
+          break;
+      }
+    }
+    console.error('error:', error);
+    console.error('args:', args);
+  }
+  if (res === null) {
+    throw new Error(`request to notion api failed: ${func.name}`);
+  }
+  return res;
+}
+async function reqAPIWithBackoffAndCache(name, func, args, count) {
+  const key = (0, _files.atoh)(JSON.stringify({
+    func: func.name,
+    args
+  }));
+  const cacheFile = `${cacheDir}/${name}-${key}`;
+  try {
+    const cache = await (0, _files.readCache)(cacheFile);
+    if (await (0, _files.isAvailableCache)(cacheFile, 600)) {
+      return cache;
+    }
+  } catch (_) {
+    /* not fatal */
+  }
+  const res = await reqAPIWithBackoff(func, args, count);
+  await (0, _files.writeCache)(cacheFile, res);
+  return res;
+}
 
 /**
  * FetchDatabase retrieves database and download images in from blocks.
@@ -47,7 +100,7 @@ const FetchDatabase = async params => {
     if (res && res.next_cursor) {
       params.start_cursor = res.next_cursor;
     }
-    res = await notion.databases.query(params);
+    res = await reqAPIWithBackoff(notion.databases.query, params, 3);
     if (allres === undefined) {
       allres = res;
     } else {
@@ -69,10 +122,10 @@ const FetchDatabase = async params => {
     for (const [, v] of Object.entries(page.properties)) {
       const page_id = page.id;
       const property_id = v.id;
-      const props = await notion.pages.properties.retrieve({
+      const props = await reqAPIWithBackoffAndCache('notion.pages.properties.retrieve', notion.pages.properties.retrieve, {
         page_id,
         property_id
-      });
+      }, 3);
       page.property_items.push(props);
       // Save avatar in people property type
       if (v.type === 'people') {
@@ -85,9 +138,9 @@ const FetchDatabase = async params => {
       }
     }
   }
-  const meta = await notion.databases.retrieve({
+  const meta = await reqAPIWithBackoff(notion.databases.retrieve, {
     database_id
-  });
+  }, 3);
   if ('cover' in meta && meta.cover !== null) {
     const imageUrl = meta.cover.type === 'external' ? meta.cover.external.url : meta.cover.file.url;
     meta.cover.src = await (0, _files.saveImage)(imageUrl, `database-cover-${database_id}`);
@@ -121,17 +174,17 @@ const FetchPage = async (page_id, last_edited_time) => {
   } catch (_) {
     /* not fatal */
   }
-  const page = await notion.pages.retrieve({
+  const page = await reqAPIWithBackoff(notion.pages.retrieve, {
     page_id
-  });
+  }, 3);
   if ('properties' in page) {
     let list;
     for (const [, v] of Object.entries(page.properties)) {
       const property_id = v.id;
-      const res = await notion.pages.properties.retrieve({
+      const res = await reqAPIWithBackoffAndCache('notion.pages.properties.retrieve', notion.pages.properties.retrieve, {
         page_id,
         property_id
-      });
+      }, 3);
       if (res.object !== 'list') {
         continue;
       }
@@ -181,9 +234,9 @@ const FetchBlocks = async (block_id, last_edited_time) => {
   } catch (_) {
     /* not fatal */
   }
-  const list = await notion.blocks.children.list({
+  const list = await reqAPIWithBackoff(notion.blocks.children.list, {
     block_id
-  });
+  }, 3);
 
   // With the blocks api, you can get the last modified date of a block,
   // but not the last modified date of all blocks. So extend the type and add it.
@@ -207,9 +260,9 @@ const FetchBlocks = async (block_id, last_edited_time) => {
         block.children = await FetchBlocks(block.id, block.last_edited_time);
       } else if (block.type === 'child_database' && block.child_database !== undefined && block.has_children) {
         const database_id = block.id;
-        block.database = await notion.databases.retrieve({
+        block.database = await reqAPIWithBackoffAndCache('notion.databases.retrieve', notion.databases.retrieve, {
           database_id
-        });
+        }, 3);
       } else if (block.type === 'bookmark' && block.bookmark !== undefined) {
         block.bookmark.site = await (0, _files.getHtmlMeta)(block.bookmark.url);
       } else if (block.type === 'image' && block.image !== undefined) {

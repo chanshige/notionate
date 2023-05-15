@@ -1,1 +1,0 @@
-{"version":3,"file":"callout.d.ts","sourceRoot":"","sources":["../../../../../src/components/page/callout.tsx"],"names":[],"mappings":"AAAA,OAAO,KAAK,MAAM,OAAO,CAAA;AAEzB,OAAO,KAAK,EACV,0BAA0B,EAC3B,MAAM,oBAAoB,CAAA;AAE3B,MAAM,MAAM,iBAAiB,GAAG;IAC9B,KAAK,EAAE,0BAA0B,CAAA;CAClC,CAAA;AAED,QAAA,MAAM,YAAY,EAAE,KAAK,CAAC,EAAE,CAAC,iBAAiB,CAc7C,CAAA;AAED,eAAe,YAAY,CAAA"}

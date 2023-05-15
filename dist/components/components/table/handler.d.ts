@@ -1,5 +1,5 @@
 /// <reference types="node" />
-/// <reference types="react" />
+import React from 'react';
 import type { GetPagePropertyResponse, Link } from '../../server/types';
 import type { ParsedUrlQueryInput } from 'node:querystring';
 export type TableHandlerProps = {
@@ -10,6 +10,6 @@ export type TableHandlerProps = {
     link?: Link;
     query?: ParsedUrlQueryInput;
 };
-export declare const TableHandler: ({ name, items, path, slug, link, query }: TableHandlerProps) => JSX.Element | null | undefined;
+export declare const TableHandler: ({ name, items, path, slug, link, query }: TableHandlerProps) => React.JSX.Element | null | undefined;
 export default TableHandler;
 //# sourceMappingURL=handler.d.ts.map

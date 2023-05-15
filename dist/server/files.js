@@ -63,6 +63,9 @@ _http.default.get[_util.promisify.custom] = function getAsync(url) {
     });
   });
 };
+
+// https://oembed.com/
+
 const httpsGet = (0, _util.promisify)(_https.default.get);
 const httpGet = (0, _util.promisify)(_http.default.get);
 const readFile = (0, _util.promisify)(_fs.default.readFile);

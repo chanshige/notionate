@@ -1,7 +1,7 @@
 import React from 'react';
 import type { RichTextPropertyItemObjectResponse } from '../../server/types';
 export type TableRichTextProps = {
-    payload: RichTextPropertyItemObjectResponse;
+    payload?: RichTextPropertyItemObjectResponse;
 };
 export declare const TableRichTextField: React.FC<TableRichTextProps>;
 export default TableRichTextField;
