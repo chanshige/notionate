@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "target": "es5",
+    "target": "esnext",
     "lib": [
       "dom",
       "dom.iterable",
@@ -20,9 +20,8 @@
     "incremental": true
   },
   "ts-node": {
-    "compilerOptions": {
-      "module": "commonjs"
-    }
+    "esm": true,
+    "require": ["tsconfig-paths/register"]
   },
   "include": [
     "next-env.d.ts",
