@@ -17,6 +17,10 @@ var _http = _interopRequireDefault(require("http"));
 var _path = _interopRequireDefault(require("path"));
 var _crypto = _interopRequireDefault(require("crypto"));
 var _util = require("util");
+var _imagemin = _interopRequireDefault(require("imagemin"));
+var _imageminWebp = _interopRequireDefault(require("imagemin-webp"));
+var _fileType = _interopRequireDefault(require("file-type"));
+var _replaceExt = _interopRequireDefault(require("replace-ext"));
 var _package = _interopRequireDefault(require("../../package.json"));
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 const docRoot = process.env.NOTIONATE_DOCROOT || 'public';
@@ -29,6 +33,7 @@ const httpOptions = {
     Accept: '*/*'
   }
 };
+const webpQuality = process.env.NOTIONATE_WEBP_QUALITY || 95;
 
 // @ts-ignore
 _https.default.get[_util.promisify.custom] = function getAsync(url) {
@@ -151,15 +156,40 @@ const saveImage = async (imageUrl, prefix) => {
   const basename = `${atoh(name)}${ext}`;
   const urlPath = `/${imageDir}/${prefix}-${basename}`;
   const filePath = `${docRoot}${urlPath}`;
-  await createDirWhenNotfound(`${docRoot}/${imageDir}`);
+  const dirPath = `${docRoot}/${imageDir}`;
+  const webpMimes = ['image/jpeg', 'image/png'];
+  const webpUrlPath = (0, _replaceExt.default)(urlPath, '.webp');
+  const webpPath = `${docRoot}${webpUrlPath}`;
+  await createDirWhenNotfound(dirPath);
   if (_fs.default.existsSync(filePath)) {
+    /* Return webp path */
+    if (webpQuality > 0) {
+      const fType = await _fileType.default.fromFile(filePath);
+      if (fType !== undefined && webpMimes.includes(fType.mime) && _fs.default.existsSync(webpPath)) {
+        return webpUrlPath;
+      }
+    }
     return urlPath;
   }
   try {
     const res = await httpsGetWithFollowRedirects(imageUrl);
     res.pipe(_fs.default.createWriteStream(filePath));
     await res.end;
-    console.log(`saved image -- path: ${filePath}, url: ${imageUrl}`);
+    /* Convert to webp */
+    if (webpQuality > 0) {
+      const fType = await _fileType.default.fromFile(filePath);
+      if (fType !== undefined && webpMimes.includes(fType.mime)) {
+        const result = await (0, _imagemin.default)([filePath], {
+          destination: dirPath,
+          plugins: [(0, _imageminWebp.default)({
+            quality: webpQuality
+          })]
+        });
+        if (result && result.length > 0) {
+          return webpUrlPath;
+        }
+      }
+    }
   } catch (e) {
     console.log(`saveImage error -- path: ${filePath}, url: ${imageUrl}, message: ${e}`);
   }
