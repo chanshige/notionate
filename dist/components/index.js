@@ -1212,7 +1212,7 @@ var blockType = {
     quote: 'blockquote',
 };
 var BlockHandler = function (_a) {
-    var _b;
+    var _b, _c, _d;
     var block = _a.block, href = _a.href, link = _a.link, query = _a.query, modules = _a.modules;
     switch (block.type) {
         case 'heading_1':
@@ -1220,12 +1220,32 @@ var BlockHandler = function (_a) {
         case 'heading_3':
         case 'paragraph':
         case 'quote':
-        case 'divider':
-        case 'numbered_list_item':
-        case 'bulleted_list_item': {
+        case 'divider': {
             var tag = blockType[block.type];
             // @ts-ignore
             var text = (_b = block[block.type]) === null || _b === void 0 ? void 0 : _b.rich_text;
+            return React.createElement(TextBlock, { tag: tag, block: text, key: block.id });
+        }
+        case 'numbered_list_item': {
+            var tag = blockType[block.type];
+            // @ts-ignore
+            var text = (_c = block[block.type]) === null || _c === void 0 ? void 0 : _c.rich_text;
+            if (block.has_children && block.children !== undefined) {
+                return (React.createElement(React.Fragment, null,
+                    React.createElement(TextBlock, { tag: tag, block: text, key: block.id }),
+                    block.children.results.map(function (bb) { return (BlockHandler({ block: bb, href: href, link: link, query: query })); })));
+            }
+            return React.createElement(TextBlock, { tag: tag, block: text, key: block.id });
+        }
+        case 'bulleted_list_item': {
+            var tag = blockType[block.type];
+            // @ts-ignore
+            var text = (_d = block[block.type]) === null || _d === void 0 ? void 0 : _d.rich_text;
+            if (block.has_children && block.children !== undefined) {
+                return (React.createElement(React.Fragment, null,
+                    React.createElement(TextBlock, { tag: tag, block: text, key: block.id }),
+                    block.children.results.map(function (bb) { return (BlockHandler({ block: bb, href: href, link: link, query: query })); })));
+            }
             return React.createElement(TextBlock, { tag: tag, block: text, key: block.id });
         }
         case 'image':

@@ -56,6 +56,12 @@ export type Icon = {
         expiry_time: string;
     };
 } | null;
+export type BulletedListItemBlockObjectResponseEx = BulletedListItemBlockObjectResponse & {
+    children?: ListBlockChildrenResponseEx;
+};
+export type NumberedListItemBlockObjectResponseEx = NumberedListItemBlockObjectResponse & {
+    children?: ListBlockChildrenResponseEx;
+};
 export type TableBlockObjectResponseEx = TableBlockObjectResponse & {
     children: ListBlockChildrenResponseEx;
 };
@@ -127,7 +133,7 @@ export type EmbedBlockObjectResponseEx = EmbedBlockObjectResponse & {
         html: string;
     };
 };
-export type BlockObjectResponse = ParagraphBlockObjectResponse | Heading1BlockObjectResponse | Heading2BlockObjectResponse | Heading3BlockObjectResponse | BulletedListItemBlockObjectResponse | NumberedListItemBlockObjectResponse | QuoteBlockObjectResponse | ToDoBlockObjectResponse | ToggleBlockObjectResponseEx | TemplateBlockObjectResponse | SyncedBlockBlockObjectResponse | ChildPageBlockObjectResponseEx | ChildDatabaseBlockObjectResponseEx | EquationBlockObjectResponse | CodeBlockObjectResponse | CalloutBlockObjectResponse | DividerBlockObjectResponse | BreadcrumbBlockObjectResponse | TableOfContentsBlockObjectResponse | ColumnListBlockObjectResponseEx | ColumnBlockObjectResponse | LinkToPageBlockObjectResponse | TableBlockObjectResponseEx | TableRowBlockObjectResponse | EmbedBlockObjectResponseEx | BookmarkBlockObjectResponseEx | ImageBlockObjectResponseEx | VideoBlockObjectResponseEx | PdfBlockObjectResponse | FileBlockObjectResponse | AudioBlockObjectResponse | LinkPreviewBlockObjectResponse | UnsupportedBlockObjectResponse;
+export type BlockObjectResponse = ParagraphBlockObjectResponse | Heading1BlockObjectResponse | Heading2BlockObjectResponse | Heading3BlockObjectResponse | BulletedListItemBlockObjectResponseEx | NumberedListItemBlockObjectResponseEx | QuoteBlockObjectResponse | ToDoBlockObjectResponse | ToggleBlockObjectResponseEx | TemplateBlockObjectResponse | SyncedBlockBlockObjectResponse | ChildPageBlockObjectResponseEx | ChildDatabaseBlockObjectResponseEx | EquationBlockObjectResponse | CodeBlockObjectResponse | CalloutBlockObjectResponse | DividerBlockObjectResponse | BreadcrumbBlockObjectResponse | TableOfContentsBlockObjectResponse | ColumnListBlockObjectResponseEx | ColumnBlockObjectResponse | LinkToPageBlockObjectResponse | TableBlockObjectResponseEx | TableRowBlockObjectResponse | EmbedBlockObjectResponseEx | BookmarkBlockObjectResponseEx | ImageBlockObjectResponseEx | VideoBlockObjectResponseEx | PdfBlockObjectResponse | FileBlockObjectResponse | AudioBlockObjectResponse | LinkPreviewBlockObjectResponse | UnsupportedBlockObjectResponse;
 export type ListBlockChildrenResponseEx = ListBlockChildrenResponse & {
     results: Array<BlockObjectResponse>;
     children?: ListBlockChildrenResponse;

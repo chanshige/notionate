@@ -68,9 +68,6 @@ _http.default.get[_util.promisify.custom] = function getAsync(url) {
     });
   });
 };
-
-// https://oembed.com/
-
 const httpsGet = (0, _util.promisify)(_https.default.get);
 const httpGet = (0, _util.promisify)(_http.default.get);
 const readFile = (0, _util.promisify)(_fs.default.readFile);
@@ -213,9 +210,9 @@ const findHtmlByRegexp = (regexps, html) => {
 exports.findHtmlByRegexp = findHtmlByRegexp;
 const titleRegexps = [/<title>([^"]*?)<\/title>/, /<title\s+[^"]+="[^"]+">([^"]*?)<\/title>/, /property="og:title"\s+content="([^"]+)"/];
 exports.titleRegexps = titleRegexps;
-const descRegexps = [/property="og:description"\s+content="([^"]+)"/, /content="([^"]+)"\s+property="og:description"/, /name="description"\s+content="([^"]+)"/, /content="([^"]+)"\s+name="description"/, /<div.*?>([\s\S]*?)<\/div>/];
+const descRegexps = [/property="og:description"\s+content="([^"]+)"/, /content="([^"]+)"\s+property="og:description"/, /name="description"\s+content="([^"]+)"/, /content="([^"]+)"\s+name="description"/, /<main\s.*?<p>([\s\S]*?)<\/p>/, /<p>([\s\S]*?)<\/p>/, /<p\s.*?>([\s\S]*?)<\/p>/, /<div>([\s\S]*?)<\/div>/, /<div\s.*?>([\s\S]*?)<\/div>/];
 exports.descRegexps = descRegexps;
-const imageRegexps = [/property="og:image:secure_url"\s+content="([^"]+)"/, /property="og:image"\s+content="([^"]+)"/, /content="([^"]+)"\s+property="og:image:secure_url"/, /content="([^"]+)"\s+property="og:image"/];
+const imageRegexps = [/property="og:image:secure_url"\s+content="([^"]+)"/, /property="og:image"\s+content="([^"]+)"/, /content="([^"]+)"\s+property="og:image:secure_url"/, /content="([^"]+)"\s+property="og:image"/, /name="og:image"\s+content="([^"]+)"/, /name="twitter:image"\s+content="([^"]+)"/];
 exports.imageRegexps = imageRegexps;
 const iconRegexps = [/<link\s+href="([^"]+)"\s+rel="icon"/, /<link\s+rel="icon"\s+href="(\/favicon\.ico)"\s*?\/?>/, /<link\s+rel="icon".*?href="([^"]+)"/, /<link\s+rel="shortcut icon"\s+type="image\/x-icon"\s+href="?([^"]+)"?\s?\/?>/, /<link\s+rel="shortcut icon"\s+href="?([^"]+)"?\s?\/?>/, /<link\s+href="?([^"]+)"?\s+rel="(shortcut icon|icon shortcut)"(\s+type="image\/x-icon")?\s?\/?>/, /<link\s+href="([^"]+)"\s+rel="icon"\s+sizes="[^"]+"\s+type="image\/[^"]"\s*\/?>/, /type="image\/x-icon"\s+href="(\/favicon\.ico)"/, /rel="icon"\s+href="(\/favicon\.ico)"/, /rel="shortcut icon"\s+href="([^"]+)"/];
 exports.iconRegexps = iconRegexps;

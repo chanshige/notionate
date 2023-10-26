@@ -1,5 +1,5 @@
 /// <reference types="node" />
-import React from 'react';
+/// <reference types="react" />
 import type { ParsedUrlQueryInput } from 'node:querystring';
 import type { GetPagePropertyResponse, Link } from '../../server/types';
 export type ListHandlerProps = {
@@ -10,6 +10,6 @@ export type ListHandlerProps = {
     link?: Link;
     query?: ParsedUrlQueryInput;
 };
-export declare const ListHandler: ({ name, items, path, slug, link, query }: ListHandlerProps) => React.JSX.Element | null | undefined;
+export declare const ListHandler: ({ name, items, path, slug, link, query }: ListHandlerProps) => JSX.Element | null | undefined;
 export default ListHandler;
 //# sourceMappingURL=handler.d.ts.map
